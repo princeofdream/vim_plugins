@@ -1,13 +1,17 @@
-taglist:
+taglist
 http://www.vim.org/scripts/script.php?script_id=273
 
-project:
+project
 http://www.vim.org/scripts/script.php?script_id=69
 
-vim-autocomplpop:
+vim-autocomplpop
 http://www.vim.org/scripts/script.php?script_id=1879
 
-showmarks:
+showmarks
 http://www.vim.org/scripts/script.php?script_id=152
 
+AfterColors
+http://www.vim.org/scripts/script.php?script_id=1641
 
+surround
+http://www.vim.org/scripts/script.php?script_id=1697
