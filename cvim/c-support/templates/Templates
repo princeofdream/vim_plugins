@@ -2,13 +2,13 @@
 §  User Macros
 § ==========================================================
 
-SetMacro( 'AUTHOR',      'YOUR NAME' )
-SetMacro( 'AUTHORREF',   '' )
+SetMacro( 'AUTHOR',      'James Lee' )
+SetMacro( 'AUTHORREF',   'Jsl' )
 SetMacro( 'COMPANY',     '' )
 SetMacro( 'COPYRIGHT',   '' )
-SetMacro( 'EMAIL',       '' )
+SetMacro( 'EMAIL',       'princeofdream@outlook.com' )
 SetMacro( 'LICENSE',     '' )
-SetMacro( 'ORGANIZATION','' )
+SetMacro( 'ORGANIZATION','BookCL' )
 
 SetStyle( 'C' )
 
