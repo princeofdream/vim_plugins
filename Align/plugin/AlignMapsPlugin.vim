@@ -169,7 +169,7 @@ if !hasmapto('<Plug>AM_tab','n')	|call AlignMaps#MakeMap("tab")|endif
 if !hasmapto('<Plug>AM_tml','n')	|call AlignMaps#MakeMap("tml")|endif
 if !hasmapto('<Plug>AM_tsp','n')	|call AlignMaps#MakeMap("tsp")|endif
 if !hasmapto('<Plug>AM_tsq','n')	|call AlignMaps#MakeMap("tsq")|endif
-if !hasmapto('<Plug>AM_tt','n')		|call AlignMaps#MakeMap("tt")|endif
+" if !hasmapto('<Plug>AM_tt','n')		|call AlignMaps#MakeMap("tt")|endif
 if !hasmapto('<Plug>AM_tab','n')	|call AlignMaps#MakeMap("tab")|endif
 
 " <Plug> normal mode mappings
