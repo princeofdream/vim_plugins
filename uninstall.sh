@@ -24,6 +24,14 @@ rm -rf $TOP/vim-autocomplpop
 rm -rf $TOP/vim-fuzzyfinder
 rm -rf $TOP/vim-l9
 rm -rf $TOP/ZoomWin
+rm -rf $TOP/awk-support
+rm -rf $TOP/bash-support
+rm -rf $TOP/c-support
+rm -rf $TOP/git-support
+rm -rf $TOP/latex-support
+rm -rf $TOP/lua-support
+rm -rf $TOP/perl-support
+rm -rf $TOP/vim-support
 
 
 

@@ -35,6 +35,14 @@ then
 	ln -s $TOP/vim_plugins/vim-fuzzyfinder ./
 	ln -s $TOP/vim_plugins/vim-l9 ./
 	ln -s $TOP/vim_plugins/ZoomWin ./
+	ln -s $TOP/awk-support ./
+	ln -s $TOP/bash-support ./
+	ln -s $TOP/c-support ./
+	ln -s $TOP/git-support ./
+	ln -s $TOP/latex-support ./
+	ln -s $TOP/lua-support ./
+	ln -s $TOP/perl-support ./
+	ln -s $TOP/vim-support ./
 else
 	cp -r $TOP/vim_plugins/AfterColors ./
 	cp -r $TOP/vim_plugins/Align ./
@@ -56,6 +64,14 @@ else
 	cp -r $TOP/vim_plugins/vim-fuzzyfinder ./
 	cp -r $TOP/vim_plugins/vim-l9 ./
 	cp -r $TOP/vim_plugins/ZoomWin ./
+	cp -r $TOP/awk-support ./
+	cp -r $TOP/bash-support ./
+	cp -r $TOP/c-support ./
+	cp -r $TOP/git-support ./
+	cp -r $TOP/latex-support ./
+	cp -r $TOP/lua-support ./
+	cp -r $TOP/perl-support ./
+	cp -r $TOP/vim-support ./
 fi
 
 
