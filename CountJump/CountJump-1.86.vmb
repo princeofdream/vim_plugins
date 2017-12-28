@@ -2,7 +2,7 @@
 UseVimball
 finish
 autoload/CountJump.vim	[[[1
-432
+412
 " CountJump.vim: Move to a buffer position via repeated jumps (or searches).
 "
 " DEPENDENCIES:
@@ -10,12 +10,16 @@ autoload/CountJump.vim	[[[1
 "   - ingo/pos.vim autoload script
 "   - ingo/motion/helper.vim autoload script (optional)
 "
-" Copyright: (C) 2009-2014 Ingo Karkat
+" Copyright: (C) 2009-2015 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.86.023	06-Mar-2015	Retire duplicated fallback for
+"				ingo#motion#helper#AdditionalMovement(); since
+"				version 1.85, the ingo-library is now a
+"				mandatory dependency.
 "   1.85.022	12-Jun-2014	Make test for 'virtualedit' option values also
 "				account for multiple values.
 "   1.85.021	05-May-2014	Use ingo#msg#WarningMsg().
@@ -197,30 +201,6 @@ endfunction
 function! CountJump#CountSearch( count, searchArguments )
     return CountJump#CountSearchWithWrapMessage(a:count, '', a:searchArguments)
 endfunction
-silent! call ingo#motion#helper#DoesNotExist()	" Execute a function to force autoload.
-if exists('*ingo#motion#helper#AdditionalMovement')
-function! s:AdditionalMovement( isSpecialLastLineTreatment )
-    return ingo#motion#helper#AdditionalMovement(a:isSpecialLastLineTreatment)
-endfunction
-else
-function! s:AdditionalMovement( isSpecialLastLineTreatment )
-    let l:save_ww = &whichwrap
-    set whichwrap+=l
-    if l:isSpecialLastLineTreatment && line('.') == line('$') && &virtualedit !~# 'all\|onemore'
-	" For the last line in the buffer, that still doesn't work in
-	" operator-pending mode, unless we can do virtual editing.
-	let l:save_virtualedit = &virtualedit
-	set virtualedit=onemore
-	normal! l
-	augroup IngoLibraryTempVirtualEdit
-	    execute 'autocmd! CursorMoved * set virtualedit=' . l:save_virtualedit . ' | autocmd! IngoLibraryTempVirtualEdit'
-	augroup END
-    else
-	normal! l
-    endif
-    let &whichwrap = l:save_ww
-endfunction
-endif
 function! CountJump#CountJumpWithWrapMessage( mode, searchName, ... )
 "*******************************************************************************
 "* PURPOSE:
@@ -263,7 +243,7 @@ function! CountJump#CountJumpWithWrapMessage( mode, searchName, ... )
 
 	if a:mode ==# 'V' && &selection ==# 'exclusive' || a:mode ==# 'O'
 	    " Special additional treatment for end patterns to end.
-	    call s:AdditionalMovement(a:mode ==# 'O')
+	    call ingo#motion#helper#AdditionalMovement(a:mode ==# 'O')
 	endif
     endif
 endfunction
@@ -482,18 +462,36 @@ let &cpo = s:save_cpo
 unlet s:save_cpo
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
 autoload/CountJump/Motion.vim	[[[1
-305
+323
 " CountJump/Motion.vim: Create custom motions via repeated jumps (or searches).
 "
 " DEPENDENCIES:
 "   - CountJump.vim, CountJump/Mappings.vim autoload scripts.
+"   - ingo/escape/command.vim autoload script
+"   - ingo/msg.vim autoload script
 "
-" Copyright: (C) 2009-2014 Ingo Karkat
+" Copyright: (C) 2009-2017 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.86.012	16-Mar-2017	CountJump#Motion#MakeBracketMotionWithJumpFunctions():
+"				Catch all exceptions and report only the text.
+"				My ErrorMotion.vim plugin could be slow to find
+"				the next error if there is none. Aborting with
+"				<C-c> would print a long multi-line exception:
+"				"Error detected while processing function
+"				ErrorMotion#Forward[1]..CountJump#JumpFunc[39]..HlgroupMotion#JumpWithWrapMessage[26]..CountJump#CountJumpFuncWithWrapMessage[35]..HlgroupMotion#SearchFirstHlgroup:
+"				line   67: Interrupted". As we apparently cannot
+"				avoid the printing of "Type :quit<Enter>  to
+"				exit Vim", suppress the Vim:Interrupt exception,
+"				and :echoerr all others.
+"   1.86.011	06-Mar-2015	CountJump#Motion#MakeBracketMotion(): The
+"				a:patternToBegin, a:patternToEnd, a:searchName
+"				arguments may contain special characters that
+"				need escaping in a map. Use
+"				ingo#escape#command#mapescape().
 "   1.83.010	02-Jan-2014	Use more canonical way of invoking the Funcrefs
 "				in
 "				CountJump#Motion#MakeBracketMotionWithJumpFunctions();
@@ -663,9 +661,9 @@ function! CountJump#Motion#MakeBracketMotion( mapArgs, keyAfterBracket, inverseK
 	    \	    a:mapArgs,
 	    \	    l:data[1],
 	    \	    string(l:data[0] && a:isEndPatternToEnd ? toupper(l:mode) : l:mode),
-	    \       string(l:searchName),
-	    \	    string(l:data[2]),
-	    \	    string(l:data[3])
+	    \       string(ingo#escape#command#mapescape(l:searchName)),
+	    \	    string(ingo#escape#command#mapescape(l:data[2])),
+	    \	    string(ingo#escape#command#mapescape(l:data[3]))
 	    \   ), '|'
 	    \)
 	endfor
@@ -773,7 +771,7 @@ function! CountJump#Motion#MakeBracketMotionWithJumpFunctions( mapArgs, keyAfter
     for l:mode in l:mapModes
 	for l:data in l:dataset
 	    execute escape(
-	    \   printf("%snoremap <silent> %s %s :<C-u>call call(%s, [%s])<CR>",
+	    \   printf("%snoremap <silent> %s %s :<C-u>try<Bar>call call(%s, [%s])<Bar>catch<Bar>if v:exception !~# '^\\%(Vim:\\)\\?Interrupt$'<Bar>echoerr ingo#msg#MsgFromVimException()<Bar>endif<Bar>endtry<CR>",
 	    \	    (l:mode ==# 'v' ? 'x' : l:mode),
 	    \	    a:mapArgs,
 	    \	    l:data[1],
@@ -1113,37 +1111,44 @@ endfunction
 
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
 autoload/CountJump/Region/Motion.vim	[[[1
-137
+144
 " CountJump/Region/Motion.vim: Create custom motions via jumps over matching
-" lines. 
+" lines.
 "
 " DEPENDENCIES:
 "   - CountJump.vim, CountJump/Mappings.vim, CountJump/Region.vim autoload scripts.
+"   - ingo/escape/command.vim autoload script
 "
-" Copyright: (C) 2010-2012 Ingo Karkat
-"   The VIM LICENSE applies to this script; see ':help copyright'. 
+" Copyright: (C) 2010-2017 Ingo Karkat
+"   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
-" REVISION	DATE		REMARKS 
+" REVISION	DATE		REMARKS
+"   1.86.006	16-Mar-2017	CountJump#Region#Motion#MakeBracketMotion():
+"				Catch all exceptions and report only the text.
+"   1.86.005	06-Mar-2015	CountJump#Region#Motion#MakeBracketMotion(): The
+"				a:Expr argument may contain special characters
+"				that need escaping in a map. Use
+"				ingo#escape#command#mapescape().
 "   1.60.004	27-Mar-2012	ENH: When keys start with <Plug>, insert Forward
 "				/ Backward instead of prepending [ / ].
 "   1.50.003	30-Aug-2011	Also support a match()-like Funcref instead of a
-"				pattern to define the range. 
+"				pattern to define the range.
 "   1.30.002	19-Dec-2010	Added a:isToEndOfLine argument to
 "				CountJump#Region#JumpToNextRegion(), to be used
 "				in operator-pending and visual modes in order to
 "				jump to the end of the matching line (for the ][
 "				motion only). In that case, also using special
 "				'O' mode argument for CountJump#JumpFunc() to
-"				include the last character, too. 
+"				include the last character, too.
 "	001	18-Dec-2010	file creation
 
 "			Move around ???
-"]x, ]]			Go to [count] next start of ???. 
-"]X, ][			Go to [count] next end of ???. 
-"[x, [[			Go to [count] previous start of ???. 
-"[X, []			Go to [count] previous end of ???. 
+"]x, ]]			Go to [count] next start of ???.
+"]X, ][			Go to [count] next end of ???.
+"[x, [[			Go to [count] previous start of ???.
+"[X, []			Go to [count] previous end of ???.
 
 function! CountJump#Region#Motion#MakeBracketMotion( mapArgs, keyAfterBracket, inverseKeyAfterBracket, Expr, isMatch, ... )
 "*******************************************************************************
@@ -1151,14 +1156,14 @@ function! CountJump#Region#Motion#MakeBracketMotion( mapArgs, keyAfterBracket, i
 "   Define a complete set of mappings for a [x / ]x motion (e.g. like the
 "   built-in ]m "Jump to start of next method") that support an optional [count]
 "   and jump over regions of lines which are defined by contiguous lines that
-"   (don't) match a:Expr. 
+"   (don't) match a:Expr.
 "   The mappings work in normal mode (jump), visual mode (expand selection) and
-"   operator-pending mode (execute operator). 
+"   operator-pending mode (execute operator).
 
 "   Normally, it will jump to the column of the first match (typically, that is
 "   column 1, always so for non-matches). But for the ]X or ][ mapping, it will
 "   include the entire line in operator-pending and visual mode; operating over
-"   / selecting the entire region is typically what the user expects. 
+"   / selecting the entire region is typically what the user expects.
 "   In visual mode, the mode will NOT be changed to linewise, though that, due
 "   to the linewise definition of a region, is usually the best mode to use the
 "   mappings in. Likewise, an operator will only work from the cursor position,
@@ -1166,50 +1171,50 @@ function! CountJump#Region#Motion#MakeBracketMotion( mapArgs, keyAfterBracket, i
 "   either go into linewise visual mode first or try the corresponding text
 "   object (if one exists); text objects DO usually switch the selection mode
 "   into what's more appropriate for them. (Compare the behavior of the built-in
-"   paragraph motion |}| vs. the "a paragraph" text object |ap|.) 
+"   paragraph motion |}| vs. the "a paragraph" text object |ap|.)
 "
 "* ASSUMPTIONS / PRECONDITIONS:
-"   None. 
+"   None.
 "
 "* EFFECTS / POSTCONDITIONS:
-"   Creates mappings for normal, visual and operator-pending mode: 
-"	Normal mode: Jumps to the <count>th region. 
-"	Visual mode: Extends the selection to the <count>th region. 
-"	Operator-pending mode: Applies the operator to the covered text. 
-"	If there aren't <count> more regions, a beep is emitted. 
+"   Creates mappings for normal, visual and operator-pending mode:
+"	Normal mode: Jumps to the <count>th region.
+"	Visual mode: Extends the selection to the <count>th region.
+"	Operator-pending mode: Applies the operator to the covered text.
+"	If there aren't <count> more regions, a beep is emitted.
 "
 "* INPUTS:
 "   a:mapArgs	Arguments to the :map command, like '<buffer>' for a
-"		buffer-local mapping. 
+"		buffer-local mapping.
 "   a:keyAfterBracket	Mapping key [sequence] after the mandatory ]/[ which
 "			start the mapping for a motion to the beginning of a
-"			block. 
+"			block.
 "			When this starts with <Plug>, the key sequence is taken
 "			as a template and a %s is replaced with "Forward" /
 "			"Backward" instead of prepending ] / [. Through this,
 "			plugins can define configurable mappings that not
 "			necessarily start with ] / [.
-"			Can be empty; the resulting mappings are then omitted. 
+"			Can be empty; the resulting mappings are then omitted.
 "   a:inverseKeyAfterBracket	Likewise, but for the motions to the end of a
 "				block. Usually the uppercased version of
-"				a:keyAfterBracket. 
+"				a:keyAfterBracket.
 "				Can be empty; the resulting mappings are then
-"				omitted. 
+"				omitted.
 "   If both a:keyAfterBracket and a:inverseKeyAfterBracket are empty, the
 "   default [[ and ]] mappings are overwritten. (Note that this is different
 "   from passing ']' and '[', respectively, because the back motions are
-"   swapped.) 
+"   swapped.)
 "   a:Expr	Regular expression that defines the region, i.e. must (not)
-"		match in all lines belonging to it. 
+"		match in all lines belonging to it.
 "		Or Funcref to a function that takes a line number and returns
-"		the matching byte offset (or -1), just like |match()|. 
-"   a:isMatch	Flag whether to search matching (vs. non-matching) lines. 
+"		the matching byte offset (or -1), just like |match()|.
+"   a:isMatch	Flag whether to search matching (vs. non-matching) lines.
 "   a:mapModes		Optional string containing 'n', 'o' and/or 'v',
 "			representing the modes for which mappings should be
-"			created. Defaults to all modes. 
+"			created. Defaults to all modes.
 "
-"* RETURN VALUES: 
-"   None. 
+"* RETURN VALUES:
+"   None.
 "*******************************************************************************
     let l:mapModes = split((a:0 ? a:1 : 'nov'), '\zs')
 
@@ -1234,12 +1239,12 @@ function! CountJump#Region#Motion#MakeBracketMotion( mapArgs, keyAfterBracket, i
 	for l:data in l:dataset
 	    let l:useToEndOfLine = (l:mode ==# 'n' ? 0 : l:data[3])
 	    execute escape(
-	    \   printf("%snoremap <silent> %s %s :<C-U>call CountJump#JumpFunc(%s, 'CountJump#Region#JumpToNextRegion', %s, %d, %d, %d, %d)<CR>",
+	    \   printf("%snoremap <silent> %s %s :<C-u>try<Bar>call CountJump#JumpFunc(%s, 'CountJump#Region#JumpToNextRegion', %s, %d, %d, %d, %d)<Bar>catch<Bar>if v:exception !~# '^\\%(Vim:\\)\\?Interrupt$'<Bar>echoerr ingo#msg#MsgFromVimException()<Bar>endif<Bar>endtry<CR>",
 	    \	    (l:mode ==# 'v' ? 'x' : l:mode),
 	    \	    a:mapArgs,
 	    \	    l:data[0],
 	    \	    string(l:mode ==# 'o' && l:useToEndOfLine ? 'O' : l:mode),
-	    \	    string(a:Expr),
+	    \	    ingo#escape#command#mapescape(string(a:Expr)),
 	    \	    a:isMatch,
 	    \	    l:data[1],
 	    \	    l:data[2],
@@ -1397,19 +1402,21 @@ endfunction
 
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
 autoload/CountJump/TextObject.vim	[[[1
-468
+470
 " CountJump/TextObject.vim: Create custom text objects via repeated jumps (or searches).
 "
 " DEPENDENCIES:
 "   - CountJump.vim, CountJump/Mappings.vim autoload scripts
 "   - ingo/pos.vim autoload script
 "
-" Copyright: (C) 2009-2014 Ingo Karkat
+" Copyright: (C) 2009-2017 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.86.021	16-Mar-2017	CountJump#TextObject#MakeWithJumpFunctions():
+"				Catch all exceptions and report only the text.
 "   1.85.020	30-Apr-2014	Use ingo/pos.vim.
 "   1.84.017	24-Apr-2014	FIX: There are no buffer-local functions with a
 "				b: scope prefix, and Vim 7.4.264 disallows those
@@ -1743,7 +1750,7 @@ function! CountJump#TextObject#MakeWithJumpFunctions( mapArgs, textObjectKey, ty
 	endif
 	for l:mode in ['o', 'v']
 	    execute escape(
-	    \   printf("%snoremap <silent> %s %s :<C-U>call CountJump#TextObject#TextObjectWithJumpFunctions('%s', %s, %s, '%s', %s, %s)<CR>",
+	    \   printf("%snoremap <silent> %s %s :<C-u>try<Bar>call CountJump#TextObject#TextObjectWithJumpFunctions('%s', %s, %s, '%s', %s, %s)<Bar>catch<Bar>if v:exception !~# '^\\%(Vim:\\)\\?Interrupt$'<Bar>echoerr ingo#msg#MsgFromVimException()<Bar>endif<Bar>endtry<CR>",
 	    \	    (l:mode ==# 'v' ? 'x' : l:mode),
 	    \	    a:mapArgs,
 	    \	    CountJump#Mappings#MakeTextObjectKey(tolower(l:type), a:textObjectKey),
@@ -1867,7 +1874,7 @@ let &cpo = s:save_cpo
 unlet s:save_cpo
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
 doc/CountJump.txt	[[[1
-424
+447
 *CountJump.txt*         Create custom motions and text objects via repeated jumps.
 
 			 COUNT JUMP    by Ingo Karkat
@@ -1925,6 +1932,8 @@ vbs_movement      (vimscript #4003): Movement over VBScript classes /
 dosbatch_movement (vimscript #4004): Movement over MSDOS batch file functions
 				     / labels with ]m etc.
 SameSyntaxMotion  (vimscript #4338): Motions to the borders of the same syntax highlighting.
+JumpToVerticalBlock:		     Like W / E, but vertically in the same column.
+		  (vimscript #0000)
 JumpToVerticalOccurrence:	     Like f{char}, but searching the same
 		  (vimscript #4841)  screen column, not line.
 ErrorMotion	  (vimscript #0000): Motions to text highlighted as error.
@@ -2124,11 +2133,32 @@ IDEAS							      *CountJump-ideas*
 ==============================================================================
 HISTORY							    *CountJump-history*
 
+1.86	24-Jul-2017
+- CountJump#Motion#MakeBracketMotion(): The a:patternToBegin, a:patternToEnd,
+  a:searchName arguments may contain special characters that need escaping in
+  a map. Use ingo#escape#command#mapescape().
+- CountJump#Region#Motion#MakeBracketMotion(): The a:Expr argument may contain
+  special characters that need escaping in a map. Use
+  ingo#escape#command#mapescape().
+- Retire duplicated fallback for ingo#motion#helper#AdditionalMovement();
+  since version 1.85, the ingo-library is now a mandatory dependency.
+- CountJump#Motion#MakeBracketMotionWithJumpFunctions(),
+  CountJump#TextObject#MakeWithJumpFunctions(),
+  CountJump#Region#Motion#MakeBracketMotion(): Catch all exceptions and
+  report only the text. My ErrorMotion.vim plugin could be slow to find the
+  next error if there is none. Aborting with <C-c> would print a long
+  multi-line exception: "Error detected while processing function
+  ErrorMotion#Forward[1]..CountJump#JumpFunc[39]..HlgroupMotion#JumpWithWrapMessage[26]..CountJump#CountJumpFuncWithWrapMessage[35]..HlgroupMotion#SearchFirstHlgroup:
+  line   67: Interrupted". As we apparently cannot avoid the printing of "Type
+  :quit<Enter>  to exit Vim", suppress the Vim:Interrupt exception, and
+  :echoerr all others.
+
 1.85	23-Dec-2014
 - Use ingo/pos.vim.
 - Use ingo#msg#WarningMsg().
 - Make test for 'virtualedit' option values also account for multiple values.
-  *** You need to update to ingo-library (vimscript #4433) version 1.019! ***
+  *** You need to install / update to ingo-library (vimscript #4433) version
+  1.019! It is now mandatory for the plugin. ***
 
 1.84	25-Apr-2014
 - Pin down the 'virtualedit' setting (to "onemore") during
@@ -2286,7 +2316,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2009-2014 Ingo Karkat
+Copyright: (C) 2009-2017 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>

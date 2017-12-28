@@ -7,29 +7,17 @@ http://www.vim.org/scripts/script.php?script_id=69
 vim-autocomplpop
 http://www.vim.org/scripts/script.php?script_id=1879
 
-showmarks
-http://www.vim.org/scripts/script.php?script_id=152
-
 AfterColors
 http://www.vim.org/scripts/script.php?script_id=1641
 
 surround
 http://www.vim.org/scripts/script.php?script_id=1697
 
-repeat
-http://www.vim.org/scripts/script.php?script_id=2136
-
 matchit
 http://www.vim.org/scripts/script.php?script_id=39
 
 python_match
 http://www.vim.org/scripts/script.php?script_id=386
-
-omnicppcomplete
-http://www.vim.org/scripts/script.php?script_id=1520
-
-c.vim
-http://www.vim.org/scripts/script.php?script_id=213
 
 vim-fuzzyfinder
 http://www.vim.org/scripts/script.php?script_id=1984
@@ -51,9 +39,6 @@ http://www.vim.org/scripts/script.php?script_id=31
 
 fencview.vim
 http://www.vim.org/scripts/script.php?script_id=1708
-
-mark.vim
-http://www.vim.org/scripts/script.php?script_id=1238
 
 ZoomWin
 http://www.vim.org/scripts/script.php?script_id=508
