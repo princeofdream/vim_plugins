@@ -1,37 +1,82 @@
-#!/bin/sh
+#!/bin/bash -
+#===============================================================================
+#
+#          FILE: uninstall.sh
+#
+#         USAGE: ./uninstall.sh
+#
+#   DESCRIPTION:
+#
+#       OPTIONS: ---
+#  REQUIREMENTS: ---
+#          BUGS: ---
+#         NOTES: ---
+#        AUTHOR: James Lee (JamesL), princeofdream@outlook.com
+#  ORGANIZATION: BookCL
+#       CREATED: 12/28/2017 09:11:19 AM
+#      REVISION:  ---
+#===============================================================================
 
-TOP=$(pwd)
+set -o nounset                              # Treat unset variables as an error
 
-cd $TOP/../
+TOP_DIR=$(pwd)
 
-rm -rf $TOP/AfterColors
-rm -rf $TOP/Align
-rm -rf $TOP/calendar-vim
-rm -rf $TOP/CountJump
-rm -rf $TOP/cvim
-rm -rf $TOP/fencview
-rm -rf $TOP/FindMate
-rm -rf $TOP/mark.vim
-rm -rf $TOP/matchit
-# rm -rf $TOP/omnicppcomplete
-rm -rf $TOP/project
-rm -rf $TOP/python_match
-rm -rf $TOP/repeat
-rm -rf $TOP/showmarks
-rm -rf $TOP/surround
-rm -rf $TOP/taglist
-rm -rf $TOP/vim-autocomplpop
-rm -rf $TOP/vim-fuzzyfinder
-rm -rf $TOP/vim-l9
-rm -rf $TOP/ZoomWin
-rm -rf $TOP/awk-support
-rm -rf $TOP/bash-support
-rm -rf $TOP/c-support
-rm -rf $TOP/git-support
-rm -rf $TOP/latex-support
-rm -rf $TOP/lua-support
-rm -rf $TOP/perl-support
-rm -rf $TOP/vim-support
+#---  FUNCTION  ----------------------------------------------------------------
+#          NAME:  remove_item
+#   DESCRIPTION:  remove item
+#    PARAMETERS:  item
+#       RETURNS:  null
+#-------------------------------------------------------------------------------
+remove_item ()
+{
+	##using unlink
+	if [ -L $1 ]
+	then
+		echo "remove item: $1"
+		unlink $1
+	fi
 
+	# if [ -d $1 ]
+	# then
+		# rm -rf $1
+	# fi
+	return 0
+}
+
+#---  FUNCTION  ----------------------------------------------------------------
+#          NAME:  uninstall_plugins
+#   DESCRIPTION:  uninstall plugins
+#    PARAMETERS:  null
+#       RETURNS:  null
+#-------------------------------------------------------------------------------
+uninstall_plugins ()
+{
+	cd $TOP_DIR/vim_plugins
+	PLUGINS_LIST=`ls`
+
+	for item in $PLUGINS_LIST; do
+		# echo "get list and remove it: $item"
+		remove_item ../$item
+	done
+	cd $TOP_DIR
+
+}	# ----------  end of function uninstall_plugins  ----------
+
+
+#---  FUNCTION  ----------------------------------------------------------------
+#          NAME:  main_func
+#   DESCRIPTION:  main func
+#    PARAMETERS:  null
+#       RETURNS:  null
+#-------------------------------------------------------------------------------
+main_func ()
+{
+	cd $TOP_DIR/vim_plugins
+	uninstall_plugins $@
+	cd $TOP_DIR
+}	# ----------  end of function main_func  ----------
+
+
+main_func $@
 
 
