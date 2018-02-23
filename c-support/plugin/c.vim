@@ -213,11 +213,11 @@ endif
 "
 call s:ApplyDefaultSetting ( 'C_CFlags', '-Wall -g -O0 -c')
 call s:ApplyDefaultSetting ( 'C_LFlags', '-Wall -g -O0'   )
-call s:ApplyDefaultSetting ( 'C_Libs',   '-lm'            )
+call s:ApplyDefaultSetting ( 'C_Libs',   '-lm -lpthread'  )
 "
 call s:ApplyDefaultSetting ( 'C_CplusCFlags', '-Wall -g -O0 -c')
 call s:ApplyDefaultSetting ( 'C_CplusLFlags', '-Wall -g -O0'   )
-call s:ApplyDefaultSetting ( 'C_CplusLibs',   '-lm'            )
+call s:ApplyDefaultSetting ( 'C_CplusLibs',   '-lm -lpthread'  )
 call s:ApplyDefaultSetting ( 'C_Debugger',    'gdb'            )
 "
 call s:ApplyDefaultSetting ( 'C_MapLeader', '' )       " default: do not overwrite 'maplocalleader'
