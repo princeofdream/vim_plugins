@@ -1535,9 +1535,11 @@ function! C_Link ()
 	let	s:LastShellReturnCode	= 0
 	let v:statusmsg = ''
 	if &filetype == "c" 
-		silent exe "make ".linkerflags." -o ".ExeEsc." ".SouEsc." ".g:C_Libs
+		" silent exe "make ".linkerflags." -o ".ExeEsc." ".SouEsc." ".g:C_Libs
+		exec "AsyncRun g++ ".linkerflags." -o ".ExeEsc." ".SouEsc." ".g:C_Libs
 	else
-		silent exe "make ".linkerflags." -o ".ExeEsc." ".SouEsc." ".g:C_CplusLibs
+		" silent exe "make ".linkerflags." -o ".ExeEsc." ".SouEsc." ".g:C_CplusLibs
+		exec "AsyncRun g++ ".linkerflags." -o ".ExeEsc." ".SouEsc." ".g:C_CplusLibs
 	endif
 	if v:shell_error != 0
 		let	s:LastShellReturnCode	= v:shell_error
